@@ -1,0 +1,81 @@
+apply plugin: 'jacoco'
+apply from: "$project.rootDir/gradle/jacoco/jacoco-config.gradle"
+
+jacoco {
+    toolVersion = '0.8.8'
+}
+
+project.afterEvaluate {
+    tasks.register("jacocoFullReport", JacocoReport) {
+        group = project.jacocoGroupName
+        description = 'Generate Jacoco aggregate report for all modules'
+        def jacocoProjects = subprojects.findAll {
+            it.getTasksByName("jacocoAndroidTestReport", false)
+        }
+        dependsOn jacocoProjects.jacocoAndroidTestReport
+
+        reports {
+            xml.enabled(true)
+            html {
+                enabled true
+                destination file(project.jacocoFullReportLocation)
+            }
+        }
+
+        final source = files(jacocoProjects.jacocoAndroidTestReport.sourceDirectories)
+
+        additionalSourceDirs.setFrom source
+        sourceDirectories.setFrom source
+
+        classDirectories.setFrom files(jacocoProjects.jacocoAndroidTestReport.classDirectories)
+        executionData.setFrom files(jacocoProjects.jacocoAndroidTestReport.executionData)
+    }
+
+    tasks.register("jacocoFullCoverageVerification", JacocoCoverageVerification) {
+        group = project.jacocoGroupName
+        description = 'Verify Jacoco Code Coverage threshold for all modules'
+
+        def jacocoProjects = subprojects.findAll {
+            it.getTasksByName("jacocoAndroidTestReport", false)
+        }
+
+        dependsOn jacocoProjects.jacocoAndroidTestReport
+
+        violationRules {
+            rule {
+                limit {
+                    counter = 'LINE'
+                    minimum = project.jacocoGlobalCoverageThreshold
+                }
+            }
+        }
+
+        final source = files(jacocoProjects.jacocoAndroidTestReport.sourceDirectories)
+
+        additionalSourceDirs.setFrom source
+        sourceDirectories.setFrom source
+
+        classDirectories.setFrom files(jacocoProjects.jacocoAndroidTestReport.classDirectories)
+        executionData.setFrom files(jacocoProjects.jacocoAndroidTestReport.executionData)
+    }
+
+    tasks.register("jacocoFullReportAndVerification") {
+        group = project.jacocoGroupName
+        dependsOn jacocoFullReport, jacocoFullCoverageVerification
+
+        doLast {
+            printCoverageOutput()
+        }
+    }
+}
+
+def printCoverageOutput() {
+    println("========================================================================= \n\n\n")
+    def matcher = new File("${project.jacocoFullReportLocation}index.html")
+            .text =~ /Total[^%]*>(\d?\d?\d?%)/
+    if (matcher) {
+        println "Full Test coverage of project : ${matcher[0][1]}"
+    }
+    println("Full Test coverage Report : file://${project.jacocoFullReportLocation}index.html")
+    println("\n\n\n=========================================================================")
+}

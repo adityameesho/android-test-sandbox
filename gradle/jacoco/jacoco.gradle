@@ -1,0 +1,99 @@
+apply plugin: 'jacoco'
+apply from: "$project.rootDir/gradle/jacoco/jacoco-config.gradle"
+
+jacoco {
+    toolVersion = '0.8.8'
+}
+
+tasks.withType(Test) {
+    jacoco.includeNoLocationClasses = true
+    jacoco.excludes = ['jdk.internal.*']
+}
+
+afterEvaluate { project ->
+    def threshold = project.hasProperty('jacocoModuleCoverageThreshold')
+            ? project.jacocoModuleCoverageThreshold
+            : project.jacocoGlobalCoverageThreshold
+
+    if (isAndroidModule(project)) {
+        setupAndroidReporting()
+        setupAndroidCoverageVerification(threshold)
+    } else {
+        setupKotlinReporting()
+        setupKotlinCoverageVerification(threshold)
+    }
+}
+
+def setupAndroidReporting() {
+    tasks.register("jacocoAndroidTestReport", JacocoReport) {
+        group = project.jacocoGroupName
+        dependsOn testDebugUnitTest
+        reports {
+            csv.enabled false
+            xml.enabled false
+            html {
+                enabled true
+                destination file(project.jacocoLocalReportLocation)
+            }
+        }
+
+        sourceDirectories.from = files(project.jacocoCoverageSourceDirs)
+        classDirectories.from = files(project.jacocoClassSourceDirectory)
+        executionData.from = project.jacocoExecutationData
+    }
+}
+
+def setupAndroidCoverageVerification(threshold) {
+    tasks.register("jacocoTestCoverageVerification", JacocoCoverageVerification) {
+        group = project.jacocoGroupName
+        dependsOn testDebugUnitTest
+        violationRules {
+            rule {
+                limit {
+                    counter = 'LINE'
+                    minimum = threshold
+                }
+            }
+        }
+
+        sourceDirectories.from = files(project.jacocoCoverageSourceDirs)
+        classDirectories.from = files(project.jacocoClassSourceDirectory)
+        executionData.from = project.jacocoExecutationData
+    }
+}
+
+def setupKotlinReporting() {
+    jacocoTestReport {
+        group = project.jacocoGroupName
+        dependsOn test
+        reports {
+            csv.enabled false
+            xml.enabled false
+            html {
+                enabled true
+                destination file(project.jacocoLocalReportLocation)
+            }
+        }
+    }
+}
+
+def setupKotlinCoverageVerification(threshold) {
+    jacocoTestCoverageVerification {
+        group = project.jacocoGroupName
+        dependsOn test
+        violationRules {
+            rule {
+                limit {
+                    counter = 'LINE'
+                    minimum = threshold
+                }
+            }
+        }
+    }
+}
+
+private static boolean isAndroidModule(Project project) {
+    def isAndroidLibrary = project.plugins.hasPlugin('com.android.library')
+    def isAndroidApp = project.plugins.hasPlugin('com.android.application')
+    return isAndroidLibrary || isAndroidApp
+}

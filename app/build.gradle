@@ -3,6 +3,8 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'kotlin-parcelize'
 
+apply from: "$project.rootDir/gradle/jacoco/jacoco.gradle"
+
 android {
     compileSdkVersion 32
     buildToolsVersion "29.0.2"
