@@ -20,3 +20,10 @@ jobs:
 
       - name: Build Project
         run: ./gradlew assemble
+
+      - name: Run Jacoco Report
+        run: ./gradlew jacocoFullReportAndVerification
+
+      - name: Upload coverage reports to Codecov
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

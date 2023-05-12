@@ -1,0 +1,97 @@
+project.ext {
+
+    // To set a threshold per module create a variable with name jacocoModuleCoverageThreshold in
+    // that module level gradle file
+
+    // ext {
+    //    jacocoModuleCoverageThreshold = 0.80
+    // }
+
+    jacocoGlobalCoverageThreshold = 0.0
+
+    jacocoGroupName = 'jacoco'
+
+    jacocoFullReportLocation = "${buildDir}/jacoco-full-report/html/"
+    jacocoLocalReportLocation = "${buildDir}/jacoco/html/"
+
+    jacocoIgnoreList = [
+            // Add module names to ignore
+    ]
+
+    // Exclude file by names, packages or types. Such files will be ignored during test coverage calculation
+    jacocoFileFilter = [
+            '**/R.class',
+            '**/BR.class',
+            '**/R$*.class',
+            '**/BuildConfig.*',
+            '**/Manifest*.*',
+            '**/*Test*.*',
+            'android/**/*.*',
+            'androidx/**/*.*',
+            '**/*Companion*.*',
+
+            // Android components
+            '**/*App*.*',
+            '**/*Application*.*',
+            '**/*Activity*.*',
+            '**/*Fragment*.*',
+            '**/*View*.*',
+            '**/*ViewGroup*.*',
+            '**/*BottomSheet*.*',
+            '**/*Sheet.*',
+            '**/*Providers*.*',
+            '**/*Dialog*.*',
+
+            //Data binding
+            '**/*Binders*.*',
+            '**/*Binder*.*',
+            '**/databinding',
+            '**/*Bindings*.*',
+
+            // Moshi
+            '**/*JsonAdapter*.*',
+            '**/*Adapter*.*',
+
+            // Dagger
+            '**/di/**',
+            '**/*Dagger*.*',
+
+            //Config
+            '**/*ConfigInteractor*.*',
+            '**/*ConfigResponse*.*',
+            '**/*ConfigMigrator*.*',
+
+            // Other
+            '**/com/meesho/core/impl/util/**',
+            '**/generated/callback',
+            '**/hilt_aggregated_deps',
+            '**/model/**',
+            '**/models/**',
+            '**/*Util*.*',
+            '**/*Utils*.*',
+            '**/*Listener*.*',
+            '**/*Constant*.*',
+            '**/*Callback*.*',
+            '**/*Exception*.*',
+            '**/*_Factory*.*',
+            '**/*_Impl*.*'
+    ]
+
+
+    final def jClasses = "${project.buildDir}/intermediates/javac/debug/classes"
+    final def kClasses = "${project.buildDir}/tmp/kotlin-classes/debug"
+    jacocoClassSourceDirectory = [
+            fileTree(dir: jClasses, excludes: jacocoFileFilter),
+            fileTree(dir: kClasses, excludes: jacocoFileFilter)
+    ]
+
+    jacocoCoverageSourceDirs = [
+            "$projectDir/src/main/java",
+            "$projectDir/src/main/kotlin"
+    ]
+
+    jacocoExecutationData = fileTree(
+            dir: project.buildDir,
+            includes: ['jacoco/testDebugUnitTest.exec']
+    )
+}
